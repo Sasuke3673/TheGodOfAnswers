@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Hỏi một câu, giữ nút, nhận lời đáp từ Vị thần quyết định.">
+<title>Vị thần quyết định</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Be+Vietnam+Pro:wght@400;500;600&display=swap">
+<style>
+/* Layout: one centered altar column — question, the book, the answer, then a short ledger of past answers. Single deliberate night look. */
+:root {
+  --night: #17142b;
+  --night-2: #221d3d;
+  --brass: #cfa95f;
+  --brass-dim: #8c7442;
+  --parchment: #ebe2cc;
+  --ink: #2a2236;
+  --mist: #b9b2cf;
+  --mystic: #9d8de0;
+  --funny: #e39a6e;
+  --wise: #7fbfa3;
+  --f-display: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+  --f-body: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+html, body { min-height: 100%; }
+body {
+  margin: 0;
+  background: radial-gradient(120% 70% at 50% 0%, var(--night-2), var(--night) 70%) fixed, var(--night);
+  color: var(--mist);
+  font-family: var(--f-body);
+  font-size: 15px;
+  line-height: 1.6;
+}
+.wrap {
+  max-width: 560px;
+  margin: 0 auto;
+  padding-inline: 18px;
+  padding-block: 28px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+header { text-align: center; display: flex; flex-direction: column; gap: 4px; }
+.eyebrow {
+  font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--brass-dim);
+}
+h1 {
+  margin: 0; font-family: var(--f-display); font-weight: 600; font-style: italic;
+  font-size: clamp(36px, 9vw, 52px); line-height: 1.05; color: var(--brass);
+  text-wrap: balance;
+}
+.lede { margin: 6px auto 0; max-width: 44ch; font-size: 14px; }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+label.lbl { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--brass-dim); }
+#q {
+  width: 100%; box-sizing: border-box;
+  background: transparent; color: var(--parchment);
+  border: 0; border-bottom: 1px solid var(--brass-dim);
+  padding: 8px 2px; font-family: var(--f-display); font-size: 21px; font-style: italic;
+}
+#q::placeholder { color: #6f6890; }
+#q:focus { outline: none; border-bottom-color: var(--brass); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.chip {
+  font: 500 13px var(--f-body); color: var(--mist);
+  background: transparent; border: 1px solid #3d3660; border-radius: 999px;
+  padding: 6px 14px; cursor: pointer;
+}
+.chip[aria-pressed="true"] { border-color: var(--brass); color: var(--parchment); background: rgba(207,169,95,.12); }
+.chip:focus-visible, .hold:focus-visible, .ghost:focus-visible { outline: 2px solid var(--brass); outline-offset: 3px; }
+
+/* the book */
+.stage { perspective: 1400px; display: flex; justify-content: center; padding-block: 6px; }
+.book {
+  position: relative; width: min(100%, 340px); aspect-ratio: 3 / 4; max-width: 100%;
+}
+.page {
+  position: absolute; inset: 0; border-radius: 4px 10px 10px 4px;
+  background: var(--parchment); color: var(--ink);
+  box-shadow: inset 14px 0 18px -14px rgba(0,0,0,.35), 0 18px 40px rgba(0,0,0,.45);
+  display: flex; flex-direction: column; justify-content: space-between;
+  padding: 26px 24px 20px; box-sizing: border-box; text-align: center;
+}
+.page .pno { font-family: var(--f-display); font-size: 14px; letter-spacing: .12em; color: #8a7a5c; font-variant-numeric: oldstyle-nums; }
+.page .ans {
+  font-family: var(--f-display); font-weight: 600; font-size: clamp(24px, 6.4vw, 31px);
+  line-height: 1.22; text-wrap: balance; margin: 0; min-width: 0;
+}
+.page .how { font-size: 13.5px; line-height: 1.55; text-align: left; margin: 0; display: grid; gap: 8px; }
+.page .how b { font-family: var(--f-display); font-size: 17px; color: #6b5a3a; margin-right: 4px; }
+.tag {
+  align-self: center; font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+  padding: 3px 10px; border-radius: 999px; color: var(--ink); font-weight: 600;
+}
+.tag.mystic { background: #d6cff2; }
+.tag.funny { background: #f3cfb8; }
+.tag.wise { background: #c6e5d6; }
+
+.cover {
+  position: absolute; inset: 0; border-radius: 4px 10px 10px 4px;
+  transform-origin: left center; transform-style: preserve-3d;
+  transition: transform .9s cubic-bezier(.6,.05,.25,1);
+  background:
+    linear-gradient(90deg, rgba(0,0,0,.35) 0 10px, transparent 10px),
+    repeating-linear-gradient(45deg, rgba(207,169,95,.05) 0 2px, transparent 2px 9px),
+    #2c2450;
+  border: 1px solid #4a3f7a;
+  box-shadow: 0 18px 40px rgba(0,0,0,.5);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  color: var(--brass); backface-visibility: hidden;
+}
+.cover .frame {
+  position: absolute; inset: 16px 16px 16px 26px; border: 1px solid rgba(207,169,95,.45); border-radius: 3px; pointer-events: none;
+}
+.cover .sigil { width: 84px; height: 84px; }
+.cover .ctitle { font-family: var(--f-display); font-style: italic; font-size: 30px; font-weight: 600; text-align: center; line-height: 1.1; }
+.cover .csub { font-size: 11px; letter-spacing: .24em; text-transform: uppercase; color: var(--brass-dim); }
+.book.open .cover { transform: rotateY(-168deg); }
+
+.actions { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.hold {
+  position: relative; overflow: hidden;
+  font: 600 15px var(--f-body); color: var(--night);
+  background: var(--brass); border: 0; border-radius: 999px;
+  padding: 13px 30px; cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none;
+  min-width: 240px; max-width: 100%;
+}
+.hold .fill {
+  position: absolute; inset: 0; background: var(--parchment); transform: scaleX(0); transform-origin: left; opacity: .55;
+}
+.hold span { position: relative; }
+.hint { font-size: 12.5px; color: #8580a3; text-align: center; margin: 0; }
+.ghost {
+  font: 500 13px var(--f-body); color: var(--brass); background: none; border: 0; cursor: pointer; padding: 4px 8px;
+  text-decoration: underline; text-underline-offset: 3px;
+}
+
+.ledger { border-top: 1px solid #332d55; padding-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+.ledger h2 { margin: 0; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--brass-dim); font-weight: 600; }
+.ledger ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.ledger li { display: grid; grid-template-columns: 52px 1fr; gap: 10px; align-items: baseline; }
+.ledger .n { font-family: var(--f-display); color: var(--brass); font-size: 15px; font-variant-numeric: tabular-nums; }
+.ledger .t { min-width: 0; }
+.ledger .qq { display: block; font-size: 12.5px; color: #827c9f; font-style: italic; }
+.ledger .aa { color: var(--parchment); }
+.ledger .empty { font-size: 13px; color: #6f6890; }
+footer { text-align: center; font-size: 12px; color: #5f5982; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cover { transition: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Sách của những câu trả lời</div>
+    <h1>Vị thần quyết định</h1>
+    <p class="lede">Nghĩ về một câu hỏi, giữ nút thật lâu cho đến khi sách tự mở. Trang nào hiện ra, đó là lời đáp dành cho bạn.</p>
+  </header>
+
+  <div class="field">
+    <label class="lbl" for="q">Câu hỏi của bạn (không bắt buộc)</label>
+    <input id="q" type="text" maxlength="140" placeholder="Có nên đổi việc trong năm nay?" autocomplete="off">
+  </div>
+
+  <div class="chips" role="group" aria-label="Phong cách câu trả lời">
+    <button class="chip" id="f-all" data-f="all" aria-pressed="true">Tất cả</button>
+    <button class="chip" id="f-mystic" data-f="mystic" aria-pressed="false">Huyền bí</button>
+    <button class="chip" id="f-funny" data-f="funny" aria-pressed="false">Hài hước</button>
+    <button class="chip" id="f-wise" data-f="wise" aria-pressed="false">Lời khuyên</button>
+  </div>
+
+  <div class="stage">
+    <div class="book" id="book">
+      <div class="page" id="page" aria-live="polite">
+        <div class="pno">Trang mở đầu</div>
+        <div class="how">
+          <p><b>I.</b>Ngồi yên vài giây, nghĩ rõ về một câu hỏi. Câu hỏi có / không là dễ nhất.</p>
+          <p><b>II.</b>Nhấn và giữ nút bên dưới. Khi vạch sáng chạy đầy, sách sẽ mở.</p>
+          <p><b>III.</b>Đọc lời đáp, rồi tự quyết. Vị thần chỉ gợi ý, quyền chọn là của bạn.</p>
+        </div>
+        <span></span>
+      </div>
+      <div class="cover" id="cover" aria-hidden="true">
+        <div class="frame"></div>
+        <svg class="sigil" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.4">
+          <circle cx="50" cy="50" r="44" opacity=".5"/>
+          <circle cx="50" cy="50" r="30"/>
+          <path d="M50 6 L50 94 M6 50 L94 50" opacity=".35"/>
+          <path d="M50 20 L58 50 L50 80 L42 50 Z" fill="currentColor" fill-opacity=".18"/>
+          <circle cx="50" cy="50" r="4" fill="currentColor"/>
+        </svg>
+        <div class="ctitle">Vị thần<br>quyết định</div>
+        <div class="csub">Giữ để mở</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="hold" id="hold" type="button"><i class="fill" id="fill"></i><span id="holdLabel">Giữ để hỏi vị thần</span></button>
+    <p class="hint">Trên máy tính có thể giữ phím Space hoặc Enter.</p>
+    <button class="ghost" id="close" type="button" hidden>Gấp sách, hỏi câu khác</button>
+  </div>
+
+  <section class="ledger" aria-label="Các lần hỏi gần đây">
+    <h2>Sổ ghi lời đáp</h2>
+    <ol id="log"><li class="empty">Chưa có lời đáp nào trong lần này.</li></ol>
+  </section>
+
+  <footer>Câu trả lời mang tính giải trí. Quyết định thật vẫn nên dựa trên suy nghĩ của chính bạn.</footer>
+</div>
+
+<script>
+const A = {
+  mystic: [
+    "Các vì sao đã gật đầu.",
+    "Câu trả lời nằm sau cánh cửa thứ ba.",
+    "Chờ đến kỳ trăng tròn.",
+    "Gió đang đổi hướng. Hãy đi cùng nó.",
+    "Có, nhưng cái giá chưa được nói ra.",
+    "Chưa phải bây giờ. Dấu hiệu sẽ đến.",
+    "Hãy để ý giấc mơ đêm nay.",
+    "Ngọn nến vẫn còn cháy. Cứ tiến lên.",
+    "Con đường này đã được vẽ sẵn cho bạn.",
+    "Điều bạn tìm cũng đang tìm bạn.",
+    "Mọi thứ đều có mùa. Mùa này chưa tới.",
+    "Một con số lặp lại sẽ cho bạn câu trả lời.",
+    "Hãy để dòng nước cuốn trôi điều cũ.",
+    "Cánh cửa đã mở từ lâu. Bạn chỉ chưa bước qua.",
+    "Đất trời đang đứng về phía bạn.",
+    "Có một bàn tay vô hình đang giữ bạn lại. Hãy tin nó.",
+    "Bóng tối dày nhất là ngay trước bình minh.",
+    "Hãy hỏi lại câu này vào sáng mai.",
+    "Sợi chỉ đỏ đã được buộc.",
+    "Đừng nhìn ngọn sóng. Hãy nhìn dòng nước.",
+    "Ba ngày nữa, mọi thứ sẽ rõ.",
+    "Có. Vũ trụ đã ghi lại điều này.",
+    "Không. Hãy để nó trôi đi.",
+    "Một người lạ sẽ mang đến lời giải.",
+    "Hãy chọn điều khiến lòng bạn yên lặng.",
+    "Ngọn núi không dời đi. Hãy đi vòng.",
+    "Điềm lành đang trên đường đến.",
+    "Đừng mở chiếc hộp ấy lúc này.",
+    "Hạt giống đã gieo. Chỉ cần thêm thời gian.",
+    "Ánh sáng sẽ đến từ phía bạn ít ngờ nhất.",
+    "Mặt trăng bảo: hãy kiên nhẫn.",
+    "Còn điều gì đó bị che giấu. Hãy tìm hiểu thêm.",
+    "Lời đáp đã nằm trong lòng bàn tay bạn.",
+    "Vòng tròn sắp khép lại.",
+    "Đây là một khởi đầu mới.",
+    "Ngôi sao của bạn đang sáng nhất.",
+    "Quá khứ sẽ gõ cửa. Đừng mở.",
+    "Hãy thắp một ngọn đèn và chờ.",
+    "Định mệnh nói có, lý trí nói hãy chờ.",
+    "Những gì thuộc về bạn sẽ không mất đi.",
+    "Con chim đầu tiên bạn thấy ngày mai sẽ báo tin.",
+    "Hãy nhìn về phương Đông."
+  ],
+  funny: [
+    "Có. Nhưng đừng kể với ai là sách bảo.",
+    "Hỏi mẹ bạn đi.",
+    "Ăn trước đã, quyết sau.",
+    "Câu này khó quá, lật trang khác giùm.",
+    "Có, nếu bạn đi tắm trước.",
+    "Không. Và đừng hỏi lại.",
+    "Ngủ một giấc rồi tính.",
+    "Vũ trụ đang bận, vui lòng gọi lại sau.",
+    "Chắc chắn rồi. À khoan, để nghĩ lại.",
+    "Có. 100%. Theo đánh giá của một cuốn sách.",
+    "Trời mưa thì có, trời nắng thì không.",
+    "Đi uống trà sữa rồi quay lại hỏi.",
+    "Bạn biết câu trả lời rồi, chỉ đang câu giờ thôi.",
+    "Để con mèo hàng xóm quyết định giúp.",
+    "Tung đồng xu đi, sách cũng mệt rồi.",
+    "Có, nhưng phải mặc bộ đồ đẹp nhất.",
+    "Hôm nay số phận nghỉ phép. Mai quay lại.",
+    "Sách đang mất mạng, thử lại sau.",
+    "Đáp án là: có lẽ. Đừng hỏi thêm.",
+    "Làm đi. Tệ nhất thì có chuyện để kể.",
+    "Nếu ví còn tiền thì có.",
+    "Không. Nhưng hôm nay tóc bạn đẹp đấy.",
+    "Cứ làm, rồi đổ lỗi cho sao Thủy nghịch hành.",
+    "Có. Nhớ mua quà cảm ơn cuốn sách.",
+    "Vui lòng nạp thêm cà phê để nhận câu trả lời.",
+    "Sách đã đọc câu hỏi và quyết định im lặng.",
+    "Hên xui.",
+    "Có, với điều kiện tối nay bạn đi ngủ sớm.",
+    "Câu trả lời đang được giao, dự kiến 3–5 ngày làm việc.",
+    "Không. Phương án B nghe hay hơn.",
+    "Cứ thử đi, đâu phải không đổi trả được.",
+    "Hỏi đứa bạn thân, rồi làm ngược lại.",
+    "Có. Lần hiếm hoi sách đồng ý mà không cần suy nghĩ.",
+    "Chuyện này để thứ Hai tính.",
+    "Nghe hơi liều. Sách thích.",
+    "Không. Sách lo cho bạn đấy.",
+    "Uống một ly nước đã.",
+    "Có, nếu chiếc xe kế tiếp chạy qua có biển số chẵn.",
+    "Bạn hỏi câu này lần thứ mấy rồi?",
+    "Làm liền đi, trước khi đổi ý.",
+    "Chắc là không. Nhưng sách hay đoán sai lắm.",
+    "Hỏi lại khi đã no bụng."
+  ],
+  wise: [
+    "Viết ra ưu và nhược điểm trước khi quyết.",
+    "Một năm sau nhìn lại, bạn sẽ tiếc điều gì hơn?",
+    "Hỏi ý kiến người bạn tin tưởng nhất.",
+    "Đừng quyết định khi đang giận.",
+    "Bắt đầu từ bước nhỏ nhất có thể.",
+    "Tìm thêm thông tin trước khi chọn.",
+    "Có. Hãy làm với sự chuẩn bị kỹ.",
+    "Chưa phải lúc. Hãy chờ thêm dữ kiện.",
+    "Ưu tiên sức khỏe của bạn.",
+    "Điều khiến bạn sợ có khi chính là điều bạn cần làm.",
+    "Đặt cho mình một giới hạn rõ ràng.",
+    "Chọn phương án bạn có thể sửa lại nếu sai.",
+    "Đừng so sánh mình với người khác.",
+    "Hãy nói thật, kể cả khi khó.",
+    "Tiền bạc quan trọng, nhưng đừng để nó quyết định một mình.",
+    "Ngủ một đêm rồi hãy quyết.",
+    "Nếu phải thuyết phục bản thân quá nhiều, có lẽ câu trả lời là không.",
+    "Tin trực giác, nhưng kiểm tra lại bằng con số.",
+    "Làm điều đúng, dù không dễ.",
+    "Hỏi lại chính mình: mình thật sự muốn gì?",
+    "Đừng hứa điều bạn không giữ được.",
+    "Thử trong một thời gian ngắn rồi đánh giá.",
+    "Có. Nhưng hãy chuẩn bị phương án dự phòng.",
+    "Không. Hãy dành năng lượng cho việc khác.",
+    "Lắng nghe nhiều hơn nói.",
+    "Tha thứ được, nhưng đừng quên bài học.",
+    "Đặt hạn chót cho quyết định này.",
+    "Muốn tất cả thì dễ mất tất cả. Hãy chọn một.",
+    "Kiên nhẫn sẽ được đền đáp.",
+    "Xem lại những gì bạn đã cam kết trước đó.",
+    "Chăm sóc bản thân trước đã.",
+    "Đừng để nỗi sợ thất bại giữ chân bạn.",
+    "Hỏi người đã từng đi con đường này.",
+    "Cho phép mình được đổi ý.",
+    "Tập trung vào điều bạn kiểm soát được.",
+    "Đọc kỹ điều khoản trước khi ký.",
+    "Còn nghi ngờ thì đừng vội.",
+    "Làm ngay. Trì hoãn chỉ khiến mọi việc khó hơn.",
+    "Quyết định tốt là quyết định bạn dám chịu trách nhiệm.",
+    "Nói chuyện thẳng với người liên quan.",
+    "Giữ lời. Uy tín mất rồi khó lấy lại.",
+    "Đừng chọn chỉ vì áp lực từ người khác."
+  ]
+};
+const LABEL = { mystic: "Huyền bí", funny: "Hài hước", wise: "Lời khuyên" };
+const ALL = [];
+for (const k of Object.keys(A)) A[k].forEach((t, i) => ALL.push({ k, t, i }));
+
+let filter = "all";
+let lastText = null;
+const history = [];
+
+const $ = id => document.getElementById(id);
+const book = $("book"), page = $("page"), fill = $("fill"), hold = $("hold"), closeBtn = $("close"), qIn = $("q");
+
+document.querySelectorAll(".chip").forEach(c => c.addEventListener("click", () => {
+  filter = c.dataset.f;
+  document.querySelectorAll(".chip").forEach(x => x.setAttribute("aria-pressed", String(x === c)));
+}));
+
+function pick() {
+  const pool = filter === "all" ? ALL : ALL.filter(a => a.k === filter);
+  let a;
+  do { a = pool[Math.floor(Math.random() * pool.length)]; } while (pool.length > 1 && a.t === lastText);
+  lastText = a.t;
+  const pageNo = 7 + Math.floor(Math.random() * 693);
+  return { ...a, pageNo };
+}
+
+function esc(s) { return s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]); }
+
+function reveal() {
+  const r = pick();
+  page.innerHTML =
+    `<div class="pno">Trang ${r.pageNo}</div>` +
+    `<p class="ans">${esc(r.t)}</p>` +
+    `<span class="tag ${r.k}">${LABEL[r.k]}</span>`;
+  book.classList.add("open");
+  closeBtn.hidden = false;
+  $("holdLabel").textContent = "Giữ để hỏi lại";
+  history.unshift({ q: qIn.value.trim(), ...r });
+  if (history.length > 6) history.pop();
+  renderLog();
+}
+
+function renderLog() {
+  $("log").innerHTML = history.map(h =>
+    `<li><span class="n">Tr. ${h.pageNo}</span><span class="t">${h.q ? `<span class="qq">${esc(h.q)}</span>` : ""}<span class="aa">${esc(h.t)}</span></span></li>`
+  ).join("");
+}
+
+const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const HOLD_MS = 1400;
+let t0 = 0, raf = 0, holding = false;
+
+function start() {
+  if (holding) return;
+  holding = true;
+  if (book.classList.contains("open")) book.classList.remove("open");
+  t0 = performance.now();
+  const step = now => {
+    const p = Math.min(1, (now - t0) / HOLD_MS);
+    fill.style.transform = `scaleX(${p})`;
+    if (p >= 1) { holding = false; fill.style.transform = "scaleX(0)"; setTimeout(reveal, reduce ? 0 : 320); return; }
+    raf = requestAnimationFrame(step);
+  };
+  raf = requestAnimationFrame(step);
+}
+function stop() {
+  if (!holding) return;
+  holding = false; cancelAnimationFrame(raf); fill.style.transform = "scaleX(0)";
+}
+
+hold.addEventListener("pointerdown", e => { e.preventDefault(); try { hold.setPointerCapture(e.pointerId); } catch (_) {} start(); });
+hold.addEventListener("pointerup", stop);
+hold.addEventListener("pointercancel", stop);
+hold.addEventListener("contextmenu", e => e.preventDefault());
+hold.addEventListener("keydown", e => { if ((e.key === " " || e.key === "Enter") && !e.repeat) { e.preventDefault(); start(); } });
+hold.addEventListener("keyup", e => { if (e.key === " " || e.key === "Enter") stop(); });
+qIn.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); hold.focus(); } });
+
+closeBtn.addEventListener("click", () => {
+  book.classList.remove("open");
+  closeBtn.hidden = true;
+  qIn.value = "";
+  qIn.focus();
+});
+</script>
+</body>
+</html>
